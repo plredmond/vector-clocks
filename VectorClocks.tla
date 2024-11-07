@@ -53,9 +53,10 @@ StepClock(p, vc) == [vc EXCEPT ![p] = @ + 1]
 DeliverableAt(m, p) ==
     \A k \in P :
         /\ k = m[1] => m[2][k] = clock[p][k] + 1
-        /\ k # m[1] => m[2][k] = clock[p][k]
+        /\ k # m[1] => m[2][k] = clock[p][k] /* BUG: should be <=
+
 \*        IF k = m[1] THEN m[2][k] = clock[p][k] + 1
-\*                    ELSE m[2][k] = clock[p][k]
+\*                    ELSE m[2][k] <= clock[p][k]
 
 SendEvent(m) == <<m[1], "send", m>>
 DeliveryEvent(p, m) == <<p, "deliver", m>>
