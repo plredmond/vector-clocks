@@ -11,26 +11,51 @@ module vector_clock(pid_t : iterable) = {
     function clock(P:pid_t) : clock_t
 
     # interface
-    action step(v:this, pid:pid_t) returns (v:this)
-    action merge(a:this, b:this) returns (a:this)
-    action leq(a:this, b:this) returns (ok:bool)
-    action lt(a:this, b:this) returns (ok:bool)
-
-    # TODO: follow the pattern of the concrete data tut with spec and impl
+    action empty returns (x:this)
+    action step(x:this, pid:pid_t) returns (x:this)
+    action merge(x:this, y:this) returns (x:this)
+    action leq(x:this, y:this) returns (b:bool)
+    action lt(x:this, y:this) returns (b:bool)
 
     specification {
+        # QQQ Can we use "after init" instead?
+        after empty {
+            #TODO assert clock(P) = 0
+        }
+        after step {
+            #TODO assert clock(P) = clock(old P)
+        }
+        # TODO merge
+        # TODO leq
+        # TODO lt
     }
 
     implementation {
         instance array_t : array(pid_t, clock_t)
         individual arr : array_t
-        # TODO: define clock in terms of arr
 
-        #   after init { # TODO: move to spec
-        #       arr := array_t.create(pid_t.size, 0)
-        #   }
+        # define representation in terms of implementation
+        definition clock(P:pid_t) = arr.value(P)
+
+        # QQQ what relates arr assigned here to x defined in the signature??
+        implement empty {
+            arr := array_t.create(pid_t.size, 0)
+        }
+        implement step {
+            # TODO
+        }
+        # TODO merge
+        # TODO leq
+        # TODO lt
     }
+
+    isolate iso = this
 }
 
 instance pid_ex : iterable
 instance mod_ex : vector_clock(pid_ex)
+export mod_ex.empty
+export mod_ex.step
+export mod_ex.merge
+export mod_ex.leq
+export mod_ex.lt
