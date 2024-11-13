@@ -1,0 +1,19 @@
+#lang ivy1.7
+
+include order
+include collections
+
+module vector_clock(pid_t : iterable) = {
+    type this
+
+    instance clock_t : unbounded_sequence
+    instance array_t : array(pid_t, clock_t)
+
+    individual arr : array_t
+    after init {
+        arr := array_t.create(pid_t.size, 0)
+    }
+}
+
+instance pid_ex : iterable
+instance mod_ex : vector_clock(pid_ex)
