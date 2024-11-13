@@ -17,6 +17,8 @@ module vector_clock(pid_t : iterable) = {
     action leq(x:this, y:this) returns (b:bool)
     action lt(x:this, y:this) returns (b:bool)
 
+    invariant [sizeIsNat] 0 <= pid_t.size
+
     specification {
         # QQQ Can we use "after init" instead?
         after empty {
@@ -52,10 +54,10 @@ module vector_clock(pid_t : iterable) = {
     isolate iso = this
 }
 
-instance pid_ex : iterable
-instance mod_ex : vector_clock(pid_ex)
-export mod_ex.empty
-export mod_ex.step
-export mod_ex.merge
-export mod_ex.leq
-export mod_ex.lt
+instance pid_tx : iterable
+instance mod_tx : vector_clock(pid_tx)
+#export mod_tx.empty
+#export mod_tx.step
+#export mod_tx.merge
+#export mod_tx.leq
+#export mod_tx.lt
