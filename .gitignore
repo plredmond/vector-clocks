@@ -2,6 +2,7 @@
 *
 
 !*.md
+!*.ivy
 
 ## Whitelist .gitignore
 !.gitignore
