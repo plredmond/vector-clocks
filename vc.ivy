@@ -6,12 +6,29 @@ include collections
 module vector_clock(pid_t : iterable) = {
     type this
 
+    # representation
     instance clock_t : unbounded_sequence
-    instance array_t : array(pid_t, clock_t)
+    function clock(P:pid_t) : clock_t
 
-    individual arr : array_t
-    after init {
-        arr := array_t.create(pid_t.size, 0)
+    # interface
+    action step(v:this, pid:pid_t) returns (v:this)
+    action merge(a:this, b:this) returns (a:this)
+    action leq(a:this, b:this) returns (ok:bool)
+    action lt(a:this, b:this) returns (ok:bool)
+
+    # TODO: follow the pattern of the concrete data tut with spec and impl
+
+    specification {
+    }
+
+    implementation {
+        instance array_t : array(pid_t, clock_t)
+        individual arr : array_t
+        # TODO: define clock in terms of arr
+
+        #   after init { # TODO: move to spec
+        #       arr := array_t.create(pid_t.size, 0)
+        #   }
     }
 }
 
