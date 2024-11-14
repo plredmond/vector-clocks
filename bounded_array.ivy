@@ -1,0 +1,70 @@
+#lang ivy1.7
+
+include order
+include collections
+
+module bounded_array(dom_finite, range) = {
+    type this
+
+    # abstract representation
+    function value(I:dom_finite) : range ## value mapping
+
+    # interface
+    action empty returns (xs:this) ## an empty array
+    action create(s:dom_finite, x:range) returns (xs:this) ## an array that maps [0, s) to the given value
+    action set(xs:this, i:dom_finite, x:range) returns (xs:this) ## the array with one index updated to the given value
+    action get(xs:this, i:dom_finite) returns (x:range) ## look up the value mapped to by the given index
+    action append(xs:this, x:range) returns (xs:this) ## make the array one element longer with the given value
+
+    # concrete representation
+    instance dom_unbounded : unbounded_sequence
+    instance impl_array : array(dom_unbounded, range)
+    individual arr : impl_array
+
+    ## tie the abstract representation to the concrete representation
+    function dom_unb(I:dom_finite) : dom_unbounded # defined in `after init`
+    function dom_fin(I:dom_unbounded) : dom_finite # defined in `after init`
+    definition value(I:dom_finite) = arr.value(dom_unb(I))
+
+    after init {
+        arr := impl_arr.empty;
+        var i:dom_finite:= 0;
+        var j:dom_unbounded := 0;
+        while i <= dom_finite.max {
+            dom_unb(i) := j;
+            dom_fin(j) := i;
+        }
+    }
+
+    specification {
+        before empty { }
+        after  empty { }
+
+        before create { assert 0 <= s }
+        #after  create { assert value(I) = x & end(xs) = s }
+
+        #before set { assert 0 <= i & i < end(xs) }
+        #after  set { assert value(I) = x if i = I else old value(I) }
+
+        #before get { assert 0 <= i & assert i < end(xs) }
+        #after  get { #xs := }
+    }
+
+    implementation {
+        implement empty {
+            arr := impl_array.empty;
+        }
+        implement create {
+            arr := impl_array.create(dom_unb(s)
+        }
+    }
+}
+
+instance domain_t : iterable
+type range_t
+instance arr_t : bounded_array(domain_t, range_t)
+export arr_t.empty
+export arr_t.create
+export arr_t.set
+export arr_t.get
+export arr_t.append
