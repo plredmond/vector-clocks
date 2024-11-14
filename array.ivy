@@ -1,0 +1,94 @@
+#lang ivy1.7
+
+include order
+
+module array(domain, range) = {
+    type this
+
+    # abstract representation
+
+    ## value mapping
+    function value(I:domain) : range
+
+    ## last index, exclusive
+    function end(XS:this) : domain
+
+    # interface
+
+    ## an empty array
+    action empty returns (xs:this)
+
+    ## an array that maps [0, s) to the given value
+    action create(s:domain, x:range) returns (xs:this)
+
+    ## the array with one index updated to the given value
+    action set(xs:this, i:domain, x:range) returns (xs:this)
+
+    ## look up the value mapped to by the given index
+    action get(xs:this, i:domain) returns (x:range)
+
+    ## make the array one element longer with the given value
+    action append(xs:this, x:range) returns (xs:this)
+
+    after init {
+        # ...
+    }
+
+    specification {
+        before empty {
+            # ...
+        }
+
+        before create {
+            assert 0 <= s;
+        }
+
+        before set {
+            assert 0 <= i;
+            assert i < end(xs);
+        }
+
+        before get {
+            assert 0 <= i;
+            assert i < end(xs);
+        }
+    }
+
+    implementation {
+        implement empty {
+            end(xs) := 0;
+        }
+
+        implement create {
+            value(I) := x;
+            end(xs) := s;
+        }
+
+        implement set {
+            value(I) := x if i = I else old value(I);
+        }
+
+        implement get {
+            #xs := 
+        }
+    }
+
+    # additional derived things
+
+    ## first index, inclusive
+    function begin(XS:this) : domain
+    definition begin(XS) = 0
+
+    ## number of array elements
+    function size(XS:this) : domain
+    definition size(XS) = end(XS)
+}
+
+type dom_t
+type ran_t
+instance arr_t : array(dom_t, ran_t)
+export arr_t.empty
+export arr_t.create
+export arr_t.set
+export arr_t.get
+export arr_t.append
