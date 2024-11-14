@@ -3,99 +3,55 @@
 include order
 include collections
 
+# interface types
 instance pid_t : iterable
+instance clock_t : unbounded_sequence
 
-invariant [pidIsNatLB] 0 <= P:pid_t
-invariant [pidIsNatUB]      P:pid_t <= pid_t.max
-invariant [pidMaxIsNat] 0 <= pid_t.max
-
-module vector_clock = {
-#module vector_clock(pid_t : iterable) = {
+module vc_t = {
     type this
 
+    # abstract representation
+    function clock(P:pid_t) : clock_t
+
+    # concrete representation
+    instance arr_t : array(pid_t, clock_t)
+    individual arr : arr_t
+
+    # tie the abstract representation to the concrete representation
+    definition clock(P:pid_t) = arr.value(P)
+
+    after init {
+        arr := arr_t.create(pid_t.max, 0);
+        assert pid_t.max = arr.end;
+        arr := arr.append(0);
+        assert pid_t.max + 1 = arr.end;
+        assert clock(P) = 0;
+    }
+
+    invariant 0 <= P:pid_t
+    invariant      P:pid_t <= pid_t.max
+    invariant                 pid_t.max + 1 = arr.end
+    invariant                 pid_t.max     < arr.end
+
     # interface
-    action zero returns (x:this)
     action step(x:this, p:pid_t) returns (x:this)
     action merge(x:this, y:this) returns (x:this)
     action leq(x:this, y:this) returns (b:bool)
     action lt(x:this, y:this) returns (b:bool)
 
-    # abstract representation
-    instance clock_t : unbounded_sequence
-    function clock(P:pid_t) : clock_t
-
-    # in terms of `clock`
     specification {
-        after init {
-            #require [requireI] 0 <= pid_t.size;
-        }
-        # required by include/1.7/collections.ivy: line 95
-        #invariant [sizeIsNat] 0 <= pid_t.size
-        #invariant [pidIsNatLB] 0 <= P:pid_t
-        #invariant [pidIsNatLB] P:pid_t <= pid_t.max
-        #invariant [pidIsNatLB] P:pid_t < pid_t.max.next
-
-        # QQQ: are the rest of these `before`/`after` blocks equivalent to
-        # putting `require`/`ensure` into the action implementations?
-
-        after zero {
-            #assert clock(P) = 0;
-        }
-
-        after step {
-            # FIXME: restate in term sof clock_t.succ relation?
-#           assert clock(P) = (1 + old clock(P)) if p = P else (old clock(P))
-        }
-        # TODO merge
-        # TODO leq
-        # TODO lt
     }
 
-    # concrete representation
-    instance array_t : array(pid_t, clock_t)
-    individual arr : array_t
-
-    # anchor abstract-rep to concrete-rep
-    definition clock(P:pid_t) = arr.value(P)
-
-    # in terms of `arr`
     implementation {
-        #invariant [pidIsNatLB] 0 <= P:pid_t & P <= pid_t.max
-        # FIXME: how to establish the following invariant with `init`?
-        # QQQ: it feels weird to be trying to establish an invariant here about the array
-        #assert [arraySizeConst] pid_t.size = arr.end
-
-        # FIXME: fold `zero` into `init`?
-        implement zero {
-            #var s := pid_t.iter.create(pid_t.max);
-            #var s := pid_t.max + 1;
-            # QQQ: what relates arr assigned here to x defined in the signature?
-            arr := array_t.create(pid_t.max, 0);
-            #ensure [arraySizeConst] pid_t.size = arr.end;
-            ##ensure P < arr.end;
-        }
-
         implement step {
-            #require 0 <= p;
-            #require p < arr.end;
-            #var c := arr.get(p);
-            #arr := arr.set(p, arr.get(p).next);
+            arr := arr.set(p, arr.get(p).next);
         }
-        # TODO merge
-        # TODO leq
-        # TODO lt
     }
 
-    isolate iso = this
 }
 
-#instance pid_tx : iterable
-#instance mod_tx : vector_clock(pid_tx)
-instance mod_tx : vector_clock
-export mod_tx.zero
-export mod_tx.step
-export mod_tx.merge
-export mod_tx.leq
-export mod_tx.lt
-
-# QQQ: extract impl = ...?
+instance vc : vc_t
+export vc.step
+export vc.merge
+export vc.leq
+export vc.lt
