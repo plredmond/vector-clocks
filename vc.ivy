@@ -40,6 +40,13 @@ module vc_mod = {
             assert [leqMeans] b <-> forall P. x.clock(P) <= y.clock(P);
             #assert false;
         }
+        after lt {
+            assert [unchanged] old x.clock(P) = x.clock(P);
+            assert [ltMeansLeqAndNeq]
+                b <-> (forall P. x.clock(P) <= y.clock(P))
+                    & (exists P. x.clock(P) ~= y.clock(P));
+            #assert false;
+        }
         after get {
             assert [unchanged] old x.clock(P) = x.clock(P);
             assert c = x.clock(p);
@@ -58,6 +65,10 @@ module vc_mod = {
         }
         implement leq {
             b := forall P. x.clock(P) <= y.clock(P);
+            #assert false;
+        }
+        implement lt {
+            b := leq(x, y) & exists P. x.clock(P) ~= y.clock(P);
             #assert false;
         }
         implement get {
