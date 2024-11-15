@@ -37,11 +37,12 @@ module vc_mod = {
         }
         after leq {
             assert [unchanged] old x.clock(P) = x.clock(P);
-            assert b = forall P. x.clock(P) <= y.clock(P);
+            assert [leqMeans] b <-> forall P. x.clock(P) <= y.clock(P);
             #assert false;
         }
         after get {
             assert [unchanged] old x.clock(P) = x.clock(P);
+            assert c = x.clock(p);
             #assert false;
         }
     }
