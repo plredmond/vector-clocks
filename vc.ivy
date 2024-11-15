@@ -18,10 +18,12 @@ module vc_mod = {
     action lt(x:this, y:this) returns (b:bool)
     action get(x:this, p:pid_t) returns (c:clock_t)
 
+    after init {
+        clock(P) := 0;
+        assert clock(P) = 0;
+    }
+
     specification {
-        after init {
-            assert clock(P) = 0;
-        }
         after step {
             assert clock_t.succ(old clock(p), clock(p));
             assert p ~= P -> old clock(P) = clock(P);
@@ -29,9 +31,6 @@ module vc_mod = {
     }
 
     implementation {
-        after init {
-            clock(P) := 0;
-        }
         implement step {
             clock(p) := clock(p).next;
         }
