@@ -36,7 +36,8 @@ module vc_mod = {
             #assert false;
         }
         after leq {
-            assert x.clock(P) = old x.clock(P);
+            assert [unchanged] old x.clock(P) = x.clock(P);
+            assert b = forall P. x.clock(P) <= y.clock(P);
             #assert false;
         }
         after get {
@@ -55,8 +56,7 @@ module vc_mod = {
             #assert false;
         }
         implement leq {
-            #b := x.clock(P) <= y.clock(P); # can't "multiply assign" to b; wanted to "and" the results together
-            b := ~(exists P. ~(x.clock(P) <= y.clock(P)));
+            b := forall P. x.clock(P) <= y.clock(P)
             #assert false;
         }
         implement get {
