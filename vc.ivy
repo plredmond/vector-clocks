@@ -28,6 +28,9 @@ module vc_mod = {
             assert clock_t.succ(old clock(p), clock(p));
             assert p ~= P -> old clock(P) = clock(P);
         }
+        after get {
+            # get doesn't mutate
+        }
     }
 
     implementation {
@@ -35,7 +38,7 @@ module vc_mod = {
             clock(p) := clock(p).next;
         }
         implement get {
-            c := clock(p)
+            c := clock(p);
         }
     }
 
