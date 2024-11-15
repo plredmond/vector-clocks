@@ -11,69 +11,71 @@ module vc_mod = {
     # abstract representation
     function clock(X:this, P:pid_t) : clock_t
 
+    relation eq(X:this, Y:this)
+    relation leq(X:this, Y:this)
+    relation lt(X:this, Y:this)
+    definition eq(x:this, y:this) = forall P. x.clock(P) = y.clock(P)
+    definition leq(x:this, y:this) = forall P. x.clock(P) <= y.clock(P)
+    definition lt(x:this, y:this) = leq(x, y) & ~eq(x, y)
+
     # interface
     action step(x:this, p:pid_t) returns (x:this)
     action merge(x:this, y:this) returns (x:this)
-    action leq(x:this, y:this) returns (b:bool)
-    action lt(x:this, y:this) returns (b:bool)
+    action equal(x:this, y:this) returns (b:bool)
+    action lessEqual(x:this, y:this) returns (b:bool)
+    action lessThan(x:this, y:this) returns (b:bool)
     action get(x:this, p:pid_t) returns (c:clock_t)
 
     after init {
         clock(X, P) := 0;
         assert clock(X, P) = 0;
-        #assert false;
     }
 
     specification {
         after step {
             #assert [incrementedIx] clock_t.succ(old x.clock(p), x.clock(p)); #FIXME
             assert [unchangedIxs] P ~= p -> old x.clock(P) = x.clock(P);
-            #assert false;
         }
         after merge {
-            assert [geqOld] old x.clock(P) <= x.clock(P);
-            assert [geqOther]   y.clock(P) <= x.clock(P);
-            #assert false;
+            assert [resultGeqOld] leq(old x, x);
+            assert [resultGeqOther] leq(y, x);
         }
-        after leq {
-            assert [unchanged] old x.clock(P) = x.clock(P);
-            assert [leqMeans] b <-> forall P. x.clock(P) <= y.clock(P);
-            #assert false;
+        after equal {
+            assert [unchanged] eq(old x, x);
+            assert [result] b = eq(x, y);
         }
-        after lt {
-            assert [unchanged] old x.clock(P) = x.clock(P);
-            assert [ltMeansLeqAndNeq]
-                b <-> (forall P. x.clock(P) <= y.clock(P))
-                    & (exists P. x.clock(P) ~= y.clock(P));
-            #assert false;
+        after lessEqual {
+            assert [unchanged] eq(old x, x);
+            assert [result] b = leq(x, y);
+        }
+        after lessThan {
+            assert [unchanged] eq(old x, x);
+            assert [result] b = lt(x, y);
         }
         after get {
-            assert [unchanged] old x.clock(P) = x.clock(P);
-            assert c = x.clock(p);
-            #assert false;
+            assert [unchanged] eq(old x, x);
+            assert [result] c = x.clock(p);
         }
     }
 
     implementation {
         implement step {
             x.clock(p) := x.clock(p).next;
-            #assert false;
         }
         implement merge {
             x.clock(P) := x.clock(P) if y.clock(P) < x.clock(P) else y.clock(P);
-            #assert false;
         }
-        implement leq {
-            b := forall P. x.clock(P) <= y.clock(P);
-            #assert false;
+        implement equal {
+            b := eq(x, y);
         }
-        implement lt {
-            b := leq(x, y) & exists P. x.clock(P) ~= y.clock(P);
-            #assert false;
+        implement lessEqual {
+            b := leq(x, y);
+        }
+        implement lessThan {
+            b := lt(x, y);
         }
         implement get {
             c := x.clock(p);
-            #assert false;
         }
     }
 
@@ -83,8 +85,9 @@ module vc_mod = {
 instance vc_t : vc_mod
 export vc_t.step
 export vc_t.merge
-export vc_t.leq
-export vc_t.lt
+export vc_t.equal
+export vc_t.lessEqual
+export vc_t.lessThan
 export vc_t.get
 # check exported actions
 #   ivy_check trace=true vc.ivy
