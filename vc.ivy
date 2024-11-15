@@ -26,13 +26,13 @@ module vc_mod = {
 
     specification {
         after step {
-            #assert clock_t.succ(old x.clock(p), x.clock(p)); #FIXME
-            assert P ~= p -> old x.clock(P) = x.clock(P);
+            #assert [incrementedIx] clock_t.succ(old x.clock(p), x.clock(p)); #FIXME
+            assert [unchangedIxs] P ~= p -> old x.clock(P) = x.clock(P);
             #assert false;
         }
         after merge {
-            assert old x.clock(P) <= x.clock(P);
-            assert     y.clock(P) <= x.clock(P);
+            assert [geqOld] old x.clock(P) <= x.clock(P);
+            assert [geqOther]   y.clock(P) <= x.clock(P);
             #assert false;
         }
         after leq {
@@ -41,7 +41,7 @@ module vc_mod = {
             #assert false;
         }
         after get {
-            assert x.clock(P) = old x.clock(P);
+            assert [unchanged] old x.clock(P) = x.clock(P);
             #assert false;
         }
     }
