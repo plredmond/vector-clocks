@@ -21,24 +21,29 @@ module vc_mod = {
     after init {
         clock(P) := 0;
         assert clock(P) = 0;
+        #assert false;
     }
 
     specification {
         after step {
             assert clock_t.succ(old clock(p), clock(p));
             assert p ~= P -> old clock(P) = clock(P);
+            #assert false;
         }
         after get {
             # get doesn't mutate
+            #assert false;
         }
     }
 
     implementation {
         implement step {
             clock(p) := clock(p).next;
+            #assert false;
         }
         implement get {
             c := clock(p);
+            #assert false;
         }
     }
 
