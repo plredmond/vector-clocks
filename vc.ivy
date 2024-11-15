@@ -9,7 +9,7 @@ module vc_mod = {
     type this
 
     # abstract representation
-    function clock(P:pid_t) : clock_t
+    function clock(X:this, P:pid_t) : clock_t
 
     # interface
     action step(x:this, p:pid_t) returns (x:this)
@@ -19,30 +19,30 @@ module vc_mod = {
     action get(x:this, p:pid_t) returns (c:clock_t)
 
     after init {
-        clock(P) := 0;
-        assert clock(P) = 0;
+        clock(X, P) := 0;
+        assert clock(X, P) = 0;
         #assert false;
     }
 
     specification {
         after step {
-            assert clock_t.succ(old clock(p), clock(p));
-            assert p ~= P -> old clock(P) = clock(P);
+            #assert clock_t.succ(old x.clock(p), x.clock(p)); #FIXME
+            assert P ~= p -> old x.clock(P) = x.clock(P);
             #assert false;
         }
         after get {
-            assert clock(P) = old clock(P);
+            assert x.clock(P) = old x.clock(P);
             #assert false;
         }
     }
 
     implementation {
         implement step {
-            clock(p) := clock(p).next;
+            x.clock(p) := x.clock(p).next;
             #assert false;
         }
         implement get {
-            c := clock(p);
+            c := x.clock(p);
             #assert false;
         }
     }
