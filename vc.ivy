@@ -1,0 +1,65 @@
+#lang ivy1.7
+
+include order
+
+instance pid_t : iterable
+instance clock_t : unbounded_sequence
+
+module vc_mod = {
+    type this
+
+    # abstract representation
+    function clock(P:pid_t) : clock_t
+
+    # interface
+    action step(x:this, p:pid_t) returns (x:this)
+    action merge(x:this, y:this) returns (x:this)
+    action leq(x:this, y:this) returns (b:bool)
+    action lt(x:this, y:this) returns (b:bool)
+    action get(x:this, p:pid_t) returns (c:clock_t)
+
+    specification {
+        after init {
+            assert clock(P) = 0;
+        }
+        after step {
+            assert clock_t.succ(old clock(p), clock(p));
+            assert p ~= P -> old clock(P) = clock(P);
+        }
+    }
+
+    implementation {
+        after init {
+            clock(P) := 0;
+        }
+        implement step {
+            clock(p) := clock(p).next;
+        }
+        implement get {
+            c := clock(p)
+        }
+    }
+
+    # TODO: how to *also* provide a cpp implementation?
+}
+
+instance vc_t : vc_mod
+export vc_t.step
+export vc_t.merge
+export vc_t.leq
+export vc_t.lt
+export vc_t.get
+# check exported actions
+#   ivy_check trace=true vc.ivy
+
+extract impl = this, pid_t, clock_t, vc_t
+# extract to cpp code
+#   ivy_to_cpp isolate=impl target=class vc.ivy
+# extract to repl
+#   ivyc isolate=impl vc.ivy
+#   ./vc 3
+#   > vc_t.step(myvc, 0)
+
+# TODO: after this is complete, try using simple-udp in the networking stdlib;
+# also look at network_shim, as used by the tendermint example; message will be
+# struct w/sender and vc
