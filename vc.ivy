@@ -56,7 +56,7 @@ module vc_mod = {
             #assert false;
         }
         implement leq {
-            b := forall P. x.clock(P) <= y.clock(P)
+            b := forall P. x.clock(P) <= y.clock(P);
             #assert false;
         }
         implement get {
