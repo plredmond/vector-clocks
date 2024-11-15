@@ -31,7 +31,7 @@ module vc_mod = {
             #assert false;
         }
         after get {
-            # get doesn't mutate
+            assert clock(P) = old clock(P);
             #assert false;
         }
     }
