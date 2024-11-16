@@ -14,9 +14,9 @@ module vc_mod = {
     relation eq(X:this, Y:this)
     relation leq(X:this, Y:this)
     relation lt(X:this, Y:this)
-    definition eq(x:this, y:this) = forall P. x.clock(P) = y.clock(P)
-    definition leq(x:this, y:this) = forall P. x.clock(P) <= y.clock(P)
-    definition lt(x:this, y:this) = leq(x, y) & ~eq(x, y)
+    definition eq(X:this, Y:this) = forall P. X.clock(P) = Y.clock(P)
+    definition leq(X:this, Y:this) = forall P. X.clock(P) <= Y.clock(P)
+    definition lt(X:this, Y:this) = leq(X, Y) & ~eq(X, Y)
 
     # interface
     action step(x:this, p:pid_t) returns (x:this)
