@@ -1,0 +1,23 @@
+#lang ivy1.7
+
+include udp
+include vc
+
+type address
+type payload
+type packet = struct {
+    sender: pid_t,
+    sent: vc_t,
+    message: payload
+}
+
+instance net : udp_simple(address, packet)
+
+import net.recv
+export net.send # importer musc define
+
+interpret address->bv[4]
+interpret payload->bv[1]
+
+extract iso_impl(self:address) = net.impl(self)
+
