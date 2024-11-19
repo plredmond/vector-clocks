@@ -10,6 +10,7 @@ module vc_mod = {
 
     # abstract representation
     function clock(X:this, P:pid_t) : clock_t
+    # FIXME: use a destructor whose type is keyval(pid_t, clock_t)
 
     relation eq(X:this, Y:this)
     relation leq(X:this, Y:this)
