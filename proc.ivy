@@ -1,0 +1,72 @@
+#lang ivy1.7
+
+include collections
+include vc
+
+type payload
+interpret payload -> bv[8]
+
+type envelope = struct {
+    sent: vc_t,
+    sender: pid_t,
+    message: payload
+}
+
+object transport = {
+    action send(src:pid_t, dst:pid_t, msg:envelope)
+    action recv(           dst:pid_t, msg:envelope)
+
+    specification {
+        relation inflight_toward(M:envelope, P:pid_t)
+
+        after init {
+            inflight_toward(M, P) := false;
+        }
+    }
+
+    before send {
+        inflight_toward(msg, dst) := true;
+    }
+
+    before recv {
+        require inflight_toward(msg, dst);
+    }
+}
+isolate transport_iso = transport
+
+object process(self:pid_t) = {
+    individual now : vc_t
+    function delivered(E:envelope) : bool
+
+    # interface
+    action send
+    action receive # try to deliver some message
+    action deliver # actually deliver a message
+
+    specification {
+        # consider writing down the local causal-delivery
+        # property?
+    }
+
+    implementation {
+        implement send {
+            # make a message
+            var e : envelope;
+            sent(e) := now;
+            sender(e) := self;
+
+            # loop sending to destinations excepting .max
+            var dst:pid_t := 0;
+            while dst < pid_t.max
+            {
+                transport.send(self, dst, e);
+                dst := dst.next;
+            }
+
+            # also send to destination .max
+            transport.send(self, dst, e);
+            assert false;
+        }
+    }
+}
+isolate process_iso = process

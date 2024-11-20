@@ -5,6 +5,10 @@ include order
 instance pid_t : iterable
 instance clock_t : unbounded_sequence
 
+# defining a `type this = struct { … }` should be equivalent to
+# several `destructor <fieldname>(X:this) : <fieldtype>` according to
+# the datatype tutorial
+
 module vc_mod = {
     type this
 
