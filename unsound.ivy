@@ -1,0 +1,40 @@
+#lang ivy1.8
+
+# Example where we prove false...
+# The issue seems to stem from array.append. It should have as precondition that the end of the array is not the max of the index type.
+# Note that this additional precondition makes array somewhat incompatible with a domain that's an instance of iterable (because the array's end is always one past its last index, such an array must necessarily have one element less than the cardinality of the domain type).
+
+include collections
+include order
+
+instance pid : iterable
+instance value : unbounded_sequence
+
+object vc = {
+    type this
+    alias t = this
+    instance arr : array(pid, value)
+    destructor repr(X:t) : arr.t
+    export action empty returns (vc:t)
+
+    implementation {
+        implement empty {
+            var pid_iter := pid.iter.create(0);
+            repr(vc) := arr.empty();
+            while ~pid_iter.is_end
+            invariant I < repr(vc).end -> repr(vc).value(I) = 0
+            invariant pid_iter.val = repr(vc).end
+            invariant pid_iter.is_end -> I < repr(vc).end
+            {
+                repr(vc) := repr(vc).append(0);
+                pid_iter := pid_iter.next;
+            }
+            ensure I < repr(vc).end; # TODO how is this sound?
+            ensure false; # It's not!
+            ensure I < repr(vc).end -> repr(vc).value(I) = 0;
+        }
+    }
+}
+
+# TODO: extraction fails due to a bug (bcast.ivy in the ivy examples also fails with the same error)
+extract impl = this, pid, pid.iter, vc.arr, value

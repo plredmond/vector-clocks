@@ -1,0 +1,57 @@
+#lang ivy1.8
+
+include order
+include collections
+
+instance pid : iterable
+instance val : unbounded_sequence
+
+object vc = {
+
+    type this
+    relation component(VC:this, P:pid, V:val)
+
+    action empty_vc returns (vc:this)
+
+    specification {
+        after empty_vc {
+            ensure component(vc, P, V) = (V = 0);
+        }
+    }
+
+    implementation {
+        # we use the keyval module from the collections library:
+        instance kv : keyval(index, pid, val)
+
+        destructor repr(VC:this) : kv
+        # I think the destructor is the same as doing this at line 10:
+        # type this = struct { repr : kv }
+        # but it allows hiding the representation (which the struct does not)
+
+        definition component(VC:this, P:pid, V:val)
+            = exists I . kv.key_at(repr(VC), I, P) & kv.value_at(repr(VC), I) = V
+
+        implement empty_vc {
+            repr(vc) := kv.empty;
+            var pid_iter := pid.iter.begin();
+            while ~pid_iter.is_end
+            invariant pid.iter.done(P, pid_iter) -> exists I . repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0
+            invariant repr(vc).key_at(I,P) -> pid.iter.done(P, pid_iter)
+            invariant pid.iter.done(P, pid_iter) & repr(vc).key_at(I,P) -> repr(vc).value_at(I) = 0
+            # invariant pid.iter.done(P, pid_iter) & repr(vc).key_at(I1,P) & repr(vc).key_at(I2,P) -> I1 = I2
+            {
+                repr(vc) := repr(vc).append_pair(pid_iter.val, 0);
+                pid_iter := pid_iter.next;
+            }
+            # assert repr(vc).key_at(I1,P) & repr(vc).key_at(I2,P) -> I1 = I2;
+            assert repr(vc).key_at(I,P) -> repr(vc).value_at(I) = 0;
+            assert exists I . repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0
+        }
+    }
+
+    isolate iso = this with pid, pid.iter, kv, index
+}
+
+export vc.empty_vc
+
+extract impl = pid, pid.iter, val, vc, vc.kv, index
