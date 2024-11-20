@@ -1,4 +1,4 @@
-#lang ivy1.7
+#lang ivy1.8
 
 include collections
 include vc
@@ -32,7 +32,9 @@ object transport = {
         require inflight_toward(msg, dst);
     }
 }
-isolate transport_iso = transport
+#isolate transport_iso = transport
+export transport.send
+export transport.recv
 
 object process(self:pid_t) = {
     individual now : vc_t
@@ -69,4 +71,7 @@ object process(self:pid_t) = {
         }
     }
 }
-isolate process_iso = process
+#isolate process_iso = process
+export process.send
+export process.receive
+export process.deliver
