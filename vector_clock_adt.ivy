@@ -22,11 +22,16 @@ object vc = {
     specification {
         after empty_vc {
             ensure component(vc, P, V) = (V = 0);
+            assert valid(vc);
+        }
+        before step {
+            assert valid(vc);
         }
         after step {
             ensure [incIx] component(old vc, p, V) & val.succ(V, W) & W ~= X
                             -> component(vc, p, W) & ~component(vc, p, X);
             ensure [constIx] Q ~= p -> component(old vc, Q, V) = component(vc, Q, V);
+            assert valid(vc);
         }
     }
 
