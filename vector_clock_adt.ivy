@@ -11,6 +11,11 @@ object vc = {
     type this
     relation component(VC:this, P:pid, V:val)
 
+    relation valid(VC:this)
+    definition valid(VC:this)
+        = (forall P. exists V. component(VC, P, V))
+        & (forall P, V, X. V ~= X & component(VC, P, V) -> ~component(VC, P, X))
+
     action empty_vc returns (vc:this)
     action step(vc:this, p:pid) returns (vc:this)
 
