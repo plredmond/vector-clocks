@@ -12,10 +12,16 @@ object vc = {
     relation component(VC:this, P:pid, V:val)
 
     action empty_vc returns (vc:this)
+    action step(vc:this, p:pid) returns (vc:this)
 
     specification {
         after empty_vc {
             ensure component(vc, P, V) = (V = 0);
+        }
+        after step {
+            ensure [incIx] component(old vc, p, V) & val.succ(V, W) & W ~= X
+                            -> component(vc, p, W) & ~component(vc, p, X);
+            ensure [constIx] Q ~= p -> component(old vc, Q, V) = component(vc, Q, V);
         }
     }
 
@@ -45,7 +51,11 @@ object vc = {
             }
             # assert repr(vc).key_at(I1,P) & repr(vc).key_at(I2,P) -> I1 = I2;
             assert repr(vc).key_at(I,P) -> repr(vc).value_at(I) = 0;
-            assert exists I . repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0
+            assert exists I . repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0;
+        }
+
+        implement step {
+            # vc and p
         }
     }
 
