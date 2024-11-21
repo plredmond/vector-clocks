@@ -17,18 +17,20 @@ object causal_delivery_service = {
     action send(loc:node, mesg:payload)
 
     # called by us to pass information up to user/app layer
-    action deliver(loc:node, mesg:payload)
+    action deliver(loc:node, sender:node, mesg:payload)
 
     # PR: what can we say that's interesting now?
     # GL: service behaves like a set of messages; if you send something,
     # it's in the set, and somebdy can deliver it
 
     # GL: after sending a thing, it is added to the set
-    relation sent(M:payload)
+    relation sent(L:node, M:payload)
     relation localEvents(L:node, E:event)
     relation hb(E1:event, E2:event)
 
     specification {
+        # (use after for send because) the service is ensuring that these
+        # changes happen; we're not assuming things about the client
         after send {
             var s : event;
             ev_node(s) := loc;
@@ -38,54 +40,68 @@ object causal_delivery_service = {
             # GL: should we restrict sending twice `assert ~sent(mesg);`?
             # PR: maybe treat that as idempotent?
 
-            sent(mesg) := true;
-            localEvents(loc, s) := true;
-            # TODO here: update hb
-
-            #hb(M1, mesg) := true;
+            sent(loc, mesg) := true;
             # PR: why not `assert sent(mesg);`?
             # GL: better perhaps to use the imperative
             # specification here because it also implies that what
             # was already there is preserved
+
+            localEvents(loc, s) := true;
+
+            #hb(E1, s) := localEvents(loc, E1); # this doesn't include transitive orderings
+            #hb(A, C) := exists B. hb(A, B) & hb(B, C); # "not in FAU" GL: z3 might diverge but you can try with `complete=fo` at cli
+            hb(E1, E2) := *;
+            assume [preserveOld] old hb(E1, E2) -> hb(E1, E2);
+            assume [addSendEvent] localEvents(loc, E1) -> hb(E1, s);
+            assume [transClosure] hb(E1, E2) & hb(E2, E3) -> hb(E1, E3);
+            # overapproximation; ivy will invent models where events
+            # that shouldn't be ordered are; we can never rely on
+            # evidence that two things aren't ordered
         }
+        # (use before for deliver because) GL: the service guarantees that
+        # if *it calls* deliver, then the causally preceding messages have
+        # been delivered
         before deliver {
-            assert sent(mesg);
-            # TODO lower level: deliverableAt(mesg, loc);
-        }
-        after deliver {
-            var d : event;
-            ev_node(d) := loc;
+            require sent(sender, mesg);
+
+            var d : event; # the deliver event constructed from given arguments
             ev_type(d) := deliver_ev;
+            ev_node(d) := loc;
             ev_mesg(d) := mesg;
 
-            var s : event;
-            #ev_node(s) := loc; # need to obtain the sender somehow
+            var s : event; # the send event of the message we want to deliver
             ev_type(s) := send_ev;
+            ev_node(s) := sender;
             ev_mesg(s) := mesg;
 
-            # TODO here: update localEvents
-            # TODO here: update hb
+            # quantifier alternation of the same type makes this undecidable
+            require ev_type(S1) = send_ev &
+                    hb(S1, s) &
+                    ev_node(D1) = loc &
+                    ev_type(D1) = deliver_ev &
+                    ev_mesg(D1) = ev_mesg(S1)
+                    -> localEvents(loc, D1);
+            #require ev_type(S1) = send_ev &
+            #        hb(S1, s)
+            #        -> exists D1.
+            #            ev_node(D1) = loc &
+            #            ev_type(D1) = deliver_ev &
+            #            ev_mesg(D1) = ev_mesg(S1) &
+            #            localEvents(loc, D1);
+            # GL: for every two events, if those are two send events, and
+            # they're causally related, and the second is the one we're
+            # going to deliver, then we've delivered the first
 
-            # TODO lower level: update local clock
+            localEvents(loc, d) := true;
+            hb(E1, E2) := *;
+            assume [preserveOld] old hb(E1, E2) -> hb(E1, E2);
+            assume [addDeliverEvent] localEvents(loc, E1) -> hb(E1, d);
+            assume [transClosure] hb(E1, E2) & hb(E2, E3) -> hb(E1, E3);
 
-            assert old sent(M) <-> sent(M);
+            #assert old sent(L, M) <-> sent(L, M); # GL: we didn't change it so this isn't needed
         }
     }
 
-    # we won't be able to do transitive closure
-    #
-    # (overapproximation) e.g. create a relation that says some things are
-    # causally related when they aren't; won't cause a safety violation, but
-    # will cause liveness issue -- the implementation will deliver messages
-    # that this cannot, so perhaps we need an underapproximation
-    #
-    # (underapproximation) e.g. ?
-
-    #implementation {
-    #    implement send {
-    #    }
-    #    #implement deliver { } # (should be an error)
-    #}
 }
 
 export causal_delivery_service.send # anybody can call send
