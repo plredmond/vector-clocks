@@ -1,77 +1,92 @@
 #lang ivy1.8
 
-include collections
-include vc
-
+type node
 type payload
-interpret payload -> bv[8]
-
-type envelope = struct {
-    sent: vc_t,
-    sender: pid_t,
-    message: payload
+type event_type = {init_ev, send_ev, deliver_ev}
+type event = struct {
+    ev_node: node,
+    ev_type: event_type,
+    ev_mesg: payload
 }
 
-object transport = {
-    action send(src:pid_t, dst:pid_t, msg:envelope)
-    action recv(           dst:pid_t, msg:envelope)
+# GL: start with a representation of global execution; representing whole
+# system's behavior
+object causal_delivery_service = {
+
+    # called by user/app to pass information down to our layer
+    action send(loc:node, mesg:payload)
+
+    # called by us to pass information up to user/app layer
+    action deliver(loc:node, mesg:payload)
+
+    # PR: what can we say that's interesting now?
+    # GL: service behaves like a set of messages; if you send something,
+    # it's in the set, and somebdy can deliver it
+
+    # GL: after sending a thing, it is added to the set
+    relation sent(M:payload)
+    relation localEvents(L:node, E:event)
+    relation hb(E1:event, E2:event)
 
     specification {
-        relation inflight_toward(M:envelope, P:pid_t)
+        after send {
+            var s : event;
+            ev_node(s) := loc;
+            ev_type(s) := send_ev;
+            ev_mesg(s) := mesg;
 
-        after init {
-            inflight_toward(M, P) := false;
+            # GL: should we restrict sending twice `assert ~sent(mesg);`?
+            # PR: maybe treat that as idempotent?
+
+            sent(mesg) := true;
+            localEvents(loc, s) := true;
+            # TODO here: update hb
+
+            #hb(M1, mesg) := true;
+            # PR: why not `assert sent(mesg);`?
+            # GL: better perhaps to use the imperative
+            # specification here because it also implies that what
+            # was already there is preserved
+        }
+        before deliver {
+            assert sent(mesg);
+            # TODO lower level: deliverableAt(mesg, loc);
+        }
+        after deliver {
+            var d : event;
+            ev_node(d) := loc;
+            ev_type(d) := deliver_ev;
+            ev_mesg(d) := mesg;
+
+            var s : event;
+            #ev_node(s) := loc; # need to obtain the sender somehow
+            ev_type(s) := send_ev;
+            ev_mesg(s) := mesg;
+
+            # TODO here: update localEvents
+            # TODO here: update hb
+
+            # TODO lower level: update local clock
+
+            assert old sent(M) <-> sent(M);
         }
     }
 
-    before send {
-        inflight_toward(msg, dst) := true;
-    }
+    # we won't be able to do transitive closure
+    #
+    # (overapproximation) e.g. create a relation that says some things are
+    # causally related when they aren't; won't cause a safety violation, but
+    # will cause liveness issue -- the implementation will deliver messages
+    # that this cannot, so perhaps we need an underapproximation
+    #
+    # (underapproximation) e.g. ?
 
-    before recv {
-        require inflight_toward(msg, dst);
-    }
+    #implementation {
+    #    implement send {
+    #    }
+    #    #implement deliver { } # (should be an error)
+    #}
 }
-#isolate transport_iso = transport
-export transport.send
-export transport.recv
 
-object process(self:pid_t) = {
-    individual now : vc_t
-    function delivered(E:envelope) : bool
-
-    # interface
-    action send
-    action receive # try to deliver some message
-    action deliver # actually deliver a message
-
-    specification {
-        # consider writing down the local causal-delivery
-        # property?
-    }
-
-    implementation {
-        implement send {
-            # make a message
-            var e : envelope;
-            sent(e) := now;
-            sender(e) := self;
-
-            # loop sending to destinations excepting .max
-            var dst:pid_t := 0;
-            while dst < pid_t.max
-            {
-                transport.send(self, dst, e);
-                dst := dst.next;
-            }
-
-            # also send to destination .max
-            transport.send(self, dst, e);
-            assert false;
-        }
-    }
-}
-#isolate process_iso = process
-export process.send
-export process.receive
-export process.deliver
+export causal_delivery_service.send # anybody can call send
+import causal_delivery_service.deliver # user provides us a callback
