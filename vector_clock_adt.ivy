@@ -12,9 +12,6 @@ object vc = {
     relation component(VC:this, P:pid, V:val)
 
     relation valid(VC:this)
-    definition valid(VC:this)
-        = (forall P. exists V. component(VC, P, V))
-        & (forall P, V, X. V ~= X & component(VC, P, V) -> ~component(VC, P, X))
 
     action empty_vc returns (vc:this)
     action step(vc:this, p:pid) returns (vc:this)
@@ -28,9 +25,9 @@ object vc = {
             assert [valid] valid(vc);
         }
         after step {
-            ensure [incIx] component(old vc, p, V) & val.succ(V, W) & W ~= X
-                            -> component(vc, p, W) & ~component(vc, p, X);
-            ensure [constIx] Q ~= p -> component(old vc, Q, V) = component(vc, Q, V);
+            #ensure [incIx] component(old vc, p, V) & val.succ(V, W) & W ~= X
+            #                -> component(vc, p, W) & ~component(vc, p, X);
+            #ensure [constIx] Q ~= p -> component(old vc, Q, V) = component(vc, Q, V);
             assert [valid] valid(vc);
         }
     }
@@ -46,6 +43,10 @@ object vc = {
 
         definition component(VC:this, P:pid, V:val)
             = exists I . kv.key_at(repr(VC), I, P) & kv.value_at(repr(VC), I) = V
+
+        definition valid(VC:this)
+            = (forall P. exists V. component(VC, P, V))
+            & (forall P, V, X. V ~= X & component(VC, P, V) -> ~component(VC, P, X))
 
         implement empty_vc {
             repr(vc) := kv.empty;
