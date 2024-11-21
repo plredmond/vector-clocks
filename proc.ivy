@@ -1,6 +1,9 @@
 #lang ivy1.8
 
-type node
+include vector_clock_adt
+include udp
+
+instance node : iterable
 type payload
 type event_type = {init_ev, send_ev, deliver_ev}
 type event = struct {
@@ -102,6 +105,19 @@ object causal_delivery_service = {
         }
     }
 
+    implementation {
+        instance vc : vector_clock(node)
+        type envelope = struct {
+            env_sender: node,
+            env_sent: vc,
+            env_mesg: payload
+        }
+        instance net : udp_simple(node, envelope)
+        implement send {
+            #
+        }
+    }
+    isolate iso = this with node, node.iter
 }
 
 export causal_delivery_service.send # anybody can call send
