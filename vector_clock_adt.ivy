@@ -3,10 +3,10 @@
 include order
 include collections
 
-instance pid : iterable
+#instance pid : iterable
 instance val : unbounded_sequence
 
-object vc = {
+module vector_clock(pid) = {
 
     type this
     relation component(VC:this, P:pid, V:val)
@@ -73,10 +73,11 @@ object vc = {
         }
     }
 
-    isolate iso = this with pid, pid.iter, kv, index
+    # FIXME
+    trusted isolate iso = this #with pid, pid.iter, kv, index
 }
 
-export vc.empty_vc
-export vc.step
+#export vc.empty_vc
+#export vc.step
 
-extract impl = pid, pid.iter, val, vc, vc.kv, index
+#extract impl = pid, pid.iter, val, vc, vc.kv, index
