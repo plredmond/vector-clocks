@@ -39,18 +39,21 @@ object service_impl(self:pid) = {
             # here we just broadcast
             var iter := pid.iter.begin();
             while ~iter.is_end()
-            invariant true # TODO
+            invariant pid.iter.done(DST, iter) -> network.spec.sent(m, DST)
+            invariant m ~= M -> network.spec.sent(M, DST) = old network.spec.sent(M, DST)
             {
                 call network.send(self, iter.val, m);
                 iter := iter.next
             }
+            #assert m ~= M -> network.spec.sent(M, DST) = old network.spec.sent(M, DST);
+            #assert network.spec.sent(m, DST);
         }
 
         implement network.recv {
             call intf.receive(self, v)
         }
 
-        invariant true # TODO
+        invariant network.spec.sent(M, DST) -> service_spec.sent(M, DST)
     }
 }
 
