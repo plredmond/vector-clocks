@@ -1,0 +1,60 @@
+#lang ivy1.8
+
+include order
+include udp
+
+type message
+instance pid : iterable
+
+object intf = {
+    export action broadcast(self:pid, m:message)
+    import action receive(self:pid, m:message)
+}
+
+# we specify the service interface with a monitor:
+object service_spec = {
+    specification {
+        relation sent(M:message, DST:pid)
+
+        after init {
+            sent(M,DST) := false
+        }
+        before intf.broadcast {
+            sent(m,DST) := true
+        }
+        before intf.receive {
+            require sent(m, self)
+        }
+    }
+}
+
+instance network : udp_simple(pid, message)
+
+object service_impl(self:pid) = {
+    implementation {
+
+        interpret message -> int
+
+        implement intf.broadcast {
+            # here we just broadcast
+            var iter := pid.iter.begin();
+            while ~iter.is_end()
+            invariant true # TODO
+            {
+                call network.send(self, iter.val, m);
+                iter := iter.next
+            }
+        }
+
+        implement network.recv {
+            call intf.receive(self, v)
+        }
+
+        invariant true # TODO
+    }
+}
+
+isolate service_impl_iso = service_impl with network, pid, pid.iter, service_spec
+
+# This can be compiled with ivyc and run in several processes that actually send each other UDP packets!
+extract impl(self:pid) = service_impl(self), pid
