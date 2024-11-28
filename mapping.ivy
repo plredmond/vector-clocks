@@ -66,9 +66,7 @@ module mapping(index, key, data) = {
             assert [unchangedIxKeys]                       k ~= X -> key_at(s, I, X) = key_at(old s, I, X);
             assert [unchangedIxVals] key_at(old s, I, X) & k ~= X -> value_at(s, I) = value_at(old s, I);
             assert [updatedExisting] key_at(old s, I, k) -> key_at(s, I, k) & value_at(s, I) = d; # Requires uniqueIx4Key
-            # FIXME: counterexample for next one seems to violate premise? using exists fixes it, so I must be expressing the premise wrongly
-            #assert [appendedNewKey] ~key_at(old s, I, k) -> key_at(s, end(old s), k) & value_at(s, end(old s)) = d;
-            assert [appendedNewKey] ~(exists I. key_at(old s, I, k)) -> key_at(s, end(old s), k) & value_at(s, end(old s)) = d;
+            assert [appendedNewKey] (forall I. ~key_at(old s, I, k)) -> key_at(s, end(old s), k) & value_at(s, end(old s)) = d;
         }
     }
 
