@@ -50,17 +50,25 @@ module mapping(index, key, data) = {
             assert (forall I. ~s.key_at(I, k)) <-> s.end = i;
         }
 
+        before get {
+            # FIXME need a representation invariant that the same key isn't at two indexes
+            assert [uniqueIx4Key] s.key_at(I, X) & s.key_at(J, X) -> I = J;
+        }
         after get {
-            # TODO find a spec for get
-            #assert  (exists I. s.key_at(I, k)) ->   s.key_at(i, k) & s.value_at(i) = d;
-            #assert ~(exists I. s.key_at(I, k)) ->  ~s.key_at(i, k) & s.end <= i & old d = d;
+            assert s.key_at(I, k) -> s.value_at(I) = d; # Requires uniqueIx4Key
         }
 
+        before set {
+            # FIXME need a representation invariant that the same key isn't at two indexes
+            assert [uniqueIx4Key] s.key_at(I, X) & s.key_at(J, X) -> I = J;
+        }
         after set {
-            # FIXME copied verbatim from removed append_pair
-            #assert key_at(s, I, X) <-> key_at(old s, I, X) | I = end(old s) & X = k;
-            #assert key_at(old s, I, X) -> value_at(s, I) = value_at(old s, I);
-            #assert value_at(s, end(old s)) = d
+            assert [unchangedIxKeys]                       k ~= X -> key_at(s, I, X) = key_at(old s, I, X);
+            assert [unchangedIxVals] key_at(old s, I, X) & k ~= X -> value_at(s, I) = value_at(old s, I);
+            assert [updatedExisting] key_at(old s, I, k) -> key_at(s, I, k) & value_at(s, I) = d; # Requires uniqueIx4Key
+            # FIXME: counterexample for next one seems to violate premise? using exists fixes it, so I must be expressing the premise wrongly
+            #assert [appendedNewKey] ~key_at(old s, I, k) -> key_at(s, end(old s), k) & value_at(s, end(old s)) = d;
+            assert [appendedNewKey] ~(exists I. key_at(old s, I, k)) -> key_at(s, end(old s), k) & value_at(s, end(old s)) = d;
         }
     }
 
