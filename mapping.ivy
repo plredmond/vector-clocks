@@ -50,22 +50,15 @@ module mapping(index, key, data) = {
             assert (forall I. ~s.key_at(I, k)) <-> s.end = i;
         }
 
-        before get {
-            # FIXME need a representation invariant that the same key isn't at two indexes
-            assert [uniqueIx4Key] s.key_at(I, X) & s.key_at(J, X) -> I = J;
-        }
         after get {
-            assert s.key_at(I, k) -> s.value_at(I) = d; # Requires uniqueIx4Key
+            assert s.key_at(I, k) & (forall J. s.key_at(J, k) & I <= J) -> s.value_at(I) = d;
         }
 
-        before set {
-            # FIXME need a representation invariant that the same key isn't at two indexes
-            assert [uniqueIx4Key] s.key_at(I, X) & s.key_at(J, X) -> I = J;
-        }
         after set {
             assert [unchangedIxKeys]                       k ~= X -> key_at(s, I, X) = key_at(old s, I, X);
             assert [unchangedIxVals] key_at(old s, I, X) & k ~= X -> value_at(s, I) = value_at(old s, I);
-            assert [updatedExisting] key_at(old s, I, k) -> key_at(s, I, k) & value_at(s, I) = d; # Requires uniqueIx4Key
+            assert [updatedExistingKey]  key_at(old s, I, k) -> key_at(s, I, k);
+            assert [updatedExistingSlot] key_at(old s, I, k) & (forall J. s.key_at(J, k) & I <= J) -> value_at(s, I) = d;
             assert [appendedNewKey] (forall I. ~key_at(old s, I, k)) -> key_at(s, end(old s), k) & value_at(s, end(old s)) = d;
         }
     }
