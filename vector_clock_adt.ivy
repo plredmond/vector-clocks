@@ -51,15 +51,18 @@ module vector_clock(pid) = {
         implement empty_vc {
             repr(vc) := kv.empty;
             var pid_iter := pid.iter.begin();
-            while ~pid_iter.is_end
-##          #invariant pid.iter.done(P, pid_iter) -> exists I . repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0
-##          #invariant repr(vc).key_at(I,P) -> pid.iter.done(P, pid_iter)
-##          invariant pid.iter.done(P, pid_iter) & repr(vc).key_at(I,P) -> repr(vc).value_at(I) = 0
-##          # invariant pid.iter.done(P, pid_iter) & repr(vc).key_at(I1,P) & repr(vc).key_at(I2,P) -> I1 = I2
-            {
-                repr(vc) := repr(vc).set(pid_iter.val, 0);
-                pid_iter := pid_iter.next;
-            }
+            assert ~pid_iter.is_end;
+            assert ~pid.iter.is_end(pid_iter);
+#           while ~pid_iter.is_end
+#           invariant pid.iter.done(P, pid_iter) -> exists I. repr(vc).key_at(I,P)
+#           #invariant pid.iter.done(P, pid_iter) -> exists I. repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0
+#           #invariant repr(vc).key_at(I,P) -> pid.iter.done(P, pid_iter)
+#           #invariant pid.iter.done(P, pid_iter) & repr(vc).key_at(I,P) -> repr(vc).value_at(I) = 0
+#           # invariant pid.iter.done(P, pid_iter) & repr(vc).key_at(I1,P) & repr(vc).key_at(I2,P) -> I1 = I2
+#           {
+#               repr(vc) := repr(vc).set(pid_iter.val, 0);
+#               pid_iter := pid_iter.next;
+#           }
 ##          # assert repr(vc).key_at(I1,P) & repr(vc).key_at(I2,P) -> I1 = I2;
 ##          assert repr(vc).key_at(I,P) -> repr(vc).value_at(I) = 0;
 ##          assert exists I . repr(vc).key_at(I, P) & repr(vc).value_at(I) = 0;
@@ -71,6 +74,16 @@ module vector_clock(pid) = {
             v := repr(vc).get(p, v);
             repr(vc) := repr(vc).set(p, v.next);
         }
+
+        # implement merge
+
+        # try using a definition for these first
+        # implement lessEqual
+        # implement equal
+        # implement less
+
+        # complete=fo
+        # TODO: generate code for the mapping
     }
 
     isolate iso = this #with pid, pid.iter, kv, index
