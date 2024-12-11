@@ -4,20 +4,9 @@ verus! {
 
     mod vc {
         use vstd::prelude::*;
-        //use vstd::math::*;
-        use std::ops::Index;
 
         #[derive(PartialEq, Eq)]
         struct VC(Vec<u64>);
-
-        impl Index<usize> for VC {
-            type Output = u64;
-            fn index(&self, i:usize) -> &Self::Output
-                requires i < self.spec_len(),
-            {
-                &self.0[i]
-            }
-        }
 
         fn max_u64(a:u64, b:u64) -> (c:u64)
             ensures
@@ -130,34 +119,4 @@ verus! {
     fn main() {
     }
 
-//  fn inc_ofs(xs:&mut Vec<i8>, i:usize)
-//      requires
-//          i < old(xs).len(),
-//          forall |j:int| old(xs)[j] < 127,
-//  {
-//      let x = xs[i];
-//      let y = x + 1;
-//      xs[i] = y;
-//  }
-
-//  fn inc_ofs(xs:&mut Vec<i8>, i:usize)
-//      requires
-//          i < old(xs).len(),
-//  {
-//      let x = xs.index_mut(i);
-//      *x = *x + 1;
-//  }
-
-    fn inc_ofs(xs:&mut Vec<i8>, i:usize)
-        requires
-            i < old(xs).len(), // necessary to index the vector
-            forall |j:int| old(xs)[j] < i8::MAX, // necessary to increment any value in the vector
-        ensures
-            forall |j:int| 0 <= j < old(xs).len() ==>
-                if i == j { old(xs)[j] + 1 == xs[j] }
-                else      { old(xs)[j]     == xs[j] },
-    {
-        let x = xs[i];
-        xs.set(i, x + 1);
-    }
 }
