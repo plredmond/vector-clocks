@@ -108,9 +108,9 @@ verus! {
                     invariant
                         self.spec_len() == other.spec_len(),
                         i <= self.spec_len(),
-                        if self[i as int] <= other[i as int]
-                             { ok == forall |j:int| 0 <= j <= i ==> self[j] <= other[j] }
-                        else { ok == forall |j:int| 0 <= j <  i ==> self[j] <= other[j] },
+                         ok ==> forall |j:int| 0 <= j < i ==> self[j] <= other[j],
+                        !ok ==> exists |j:int| 0 <= j < i &&  self[j] > other[j],
+
                 {
                     ok = ok && self.index(i) <= other.index(i);
                     i += 1;
