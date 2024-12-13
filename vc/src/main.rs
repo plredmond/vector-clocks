@@ -78,22 +78,21 @@ verus! {
             pub fn merge(&mut self, other:VC)
                 requires
                     old(self).spec_len() == other.spec_len(),
-                // TODO: supremum postcondition
+                ensures
+                    forall |i:int| 0 <= i < self.spec_len() ==>     other[i] <= self[i],
+                    forall |i:int| 0 <= i < self.spec_len() ==> old(self)[i] <= self[i],
             {
                 let mut i = 0;
                 while i < self.len()
-                    invariant self.spec_len() == other.spec_len(),
+                    invariant
+                        self.spec_len() == other.spec_len(),
+                        forall |j:int| 0 <= j < i ==> other[j] <= self[j],
+                        forall |j:int| 0 <= j < self.spec_len() ==> old(self)[j] <= self[j],
                 {
                     let c = max_u64(self.index(i), other.index(i));
                     self.0.set(i, c);
                     i += 1;
                 }
-                //for i in 0..self.len()
-                //    invariant self.spec_len() == other.spec_len(),
-                //{
-                //    let c = max_u64(self.index(i), other.index(i));
-                //    self.0.set(i, c);
-                //}
             }
 
             pub fn lessEqual(self, other: VC) -> (r:bool)
