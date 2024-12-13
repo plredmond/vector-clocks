@@ -107,7 +107,9 @@ verus! {
                         iter.end == self.spec_len(),
                          ok ==> forall |j:int| 0 <= j < i ==> self[j] <= other[j],
                         !ok ==> exists |j:int| 0 <= j < i &&  self[j] > other[j],
+                        //0 <= i <= self.spec_len(), // why not < the upper bound?
                 {
+                    //assert(0 <= i < self.spec_len());
                     ok = ok && self.index(i) <= other.index(i);
                 }
                 ok
