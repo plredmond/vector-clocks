@@ -82,16 +82,15 @@ verus! {
                     forall |i:int| 0 <= i < self.spec_len() ==>     other[i] <= self[i],
                     forall |i:int| 0 <= i < self.spec_len() ==> old(self)[i] <= self[i],
             {
-                let mut i = 0;
-                while i < self.len()
+                for i in iter: 0..self.len()
                     invariant
                         self.spec_len() == other.spec_len(),
+                        iter.end == self.spec_len(),
                         forall |j:int| 0 <= j < i ==> other[j] <= self[j],
                         forall |j:int| 0 <= j < self.spec_len() ==> old(self)[j] <= self[j],
                 {
                     let c = max_u64(self.index(i), other.index(i));
                     self.0.set(i, c);
-                    i += 1;
                 }
             }
 
@@ -102,18 +101,15 @@ verus! {
                     r == forall |i:int| 0 <= i < self.spec_len() ==> self[i] <= other[i],
             {
                 let mut ok = true;
-                let mut i = 0;
-                while i < self.len()
+                for i in iter: 0..self.len()
                     invariant
                         self.spec_len() == other.spec_len(),
-                        i <= self.spec_len(),
+                        iter.end == self.spec_len(),
                          ok ==> forall |j:int| 0 <= j < i ==> self[j] <= other[j],
                         !ok ==> exists |j:int| 0 <= j < i &&  self[j] > other[j],
                 {
                     ok = ok && self.index(i) <= other.index(i);
-                    i += 1;
                 }
-                assert(i == self.spec_len());
                 ok
             }
 
